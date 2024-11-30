@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Image Editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      text-align: center;
+    }
+    #image-container {
+      position: relative;
+      display: inline-block;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      width: 600px;
+      height: 400px;
+      background: #f0f0f0;
+    }
+    #image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .text-overlay {
+      position: absolute;
+      font-size: 20px;
+      color: black;
+      cursor: move;
+    }
+    #controls {
+      margin-top: 20px;
+    }
+    input[type="file"] {
+      margin-bottom: 10px;
+    }
+    select, input, button {
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Interactive Image Editor</h1>
+  
+  <input type="file" id="upload-image" accept="image/*"><br>
+  
+  <div id="controls">
+    <input type="text" id="text-input" placeholder="Add text">
+    <button onclick="addText()">Add Text</button>
+    <button onclick="removeText()">Remove Selected Text</button><br>
+    
+    <label for="font-size">Font Size:</label>
+    <input type="number" id="font-size" min="10" value="20">
+    
+    <label for="font-style">Font Style:</label>
+    <select id="font-style">
+      <option value="Arial">Arial</option>
+      <option value="Times New Roman">Times New Roman</option>
+      <option value="Courier New">Courier New</option>
+    </select>
+    
+    <label for="font-color">Text Color:</label>
+    <input type="color" id="font-color" value="#000000"><br>
+    
+    <button onclick="undo()">Undo</button>
+    <button onclick="redo()">Redo</button>
+  </div>
+  
+  <div id="image-container"></div>
+
+  <script>
+    const imageContainer = document.getElementById('image-container');
+    const uploadImage = document.getElementById('upload-image');
+    const fontSizeInput = document.getElementById('font-size');
+    const fontStyleInput = document.getElementById('font-style');
+    const fontColorInput = document.getElementById('font-color');
+    const textInput = document.getElementById('text-input');
+    let selectedText = null;
+    let history = [];
+    let historyIndex = -1;
+
+    // Load the image
+    uploadImage.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => {
+          imageContainer.innerHTML = '';
+          imageContainer.appendChild(img);
+          saveState();
+        };
+      }
+    });
+
+    // Add text to the image
+    function addText() {
+      if (!textInput.value.trim()) return;
+      const text = document.createElement('div');
+      text.className = 'text-overlay';
+      text.innerText = textInput.value;
+      text.style.fontSize = `${fontSizeInput.value}px`;
+      text.style.fontFamily = fontStyleInput.value;
+      text.style.color = fontColorInput.value;
+      text.style.top = '50%';
+      text.style.left = '50%';
+      text.draggable = true;
+
+      // Event listeners for dragging and selecting
+      text.addEventListener('mousedown', () => {
+        selectedText = text;
+      });
+      text.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', null);
+      });
+      text.addEventListener('drag', (e) => {
+        if (e.pageX && e.pageY) {
+          text.style.left = `${e.pageX - imageContainer.offsetLeft}px`;
+          text.style.top = `${e.pageY - imageContainer.offsetTop}px`;
+        }
+      });
+      imageContainer.appendChild(text);
+      saveState();
+    }
+
+    // Remove the selected text
+    function removeText() {
+      if (selectedText) {
+        selectedText.remove();
+        selectedText = null;
+        saveState();
+      }
+    }
+
+    // Change font size, style, or color of selected text
+    fontSizeInput.addEventListener('input', () => {
+      if (selectedText) {
+        selectedText.style.fontSize = `${fontSizeInput.value}px`;
+        saveState();
+      }
+    });
+
+    fontStyleInput.addEventListener('change', () => {
+      if (selectedText) {
+        selectedText.style.fontFamily = fontStyleInput.value;
+        saveState();
+      }
+    });
+
+    fontColorInput.addEventListener('input', () => {
+      if (selectedText) {
+        selectedText.style.color = fontColorInput.value;
+        saveState();
+      }
+    });
+
+    // Undo functionality
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        loadState();
+      }
+    }
+
+    // Redo functionality
+    function redo() {
+      if (historyIndex < history.length - 1) {
+        historyIndex++;
+        loadState();
+      }
+    }
+
+    // Save the current state
+    function saveState() {
+      history = history.slice(0, historyIndex + 1); // Discard future states
+      history.push(imageContainer.innerHTML);
+      historyIndex = history.length - 1;
+    }
+
+    // Load a state from history
+    function loadState() {
+      imageContainer.innerHTML = history[historyIndex];
+      imageContainer.querySelectorAll('.text-overlay').forEach((text) => {
+        text.addEventListener('mousedown', () => {
+          selectedText = text;
+        });
+        text.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', null);
+        });
+        text.addEventListener('drag', (e) => {
+          if (e.pageX && e.pageY) {
+            text.style.left = `${e.pageX - imageContainer.offsetLeft}px`;
+            text.style.top = `${e.pageY - imageContainer.offsetTop}px`;
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>
