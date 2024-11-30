@@ -69,7 +69,6 @@
   </div>
   
   <div id="image-container"></div>
-
   <script>
     const imageContainer = document.getElementById('image-container');
     const uploadImage = document.getElementById('upload-image');
@@ -80,8 +79,6 @@
     let selectedText = null;
     let history = [];
     let historyIndex = -1;
-
-    // Load the image
     uploadImage.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -94,8 +91,6 @@
         };
       }
     });
-
-    // Add text to the image
     function addText() {
       if (!textInput.value.trim()) return;
       const text = document.createElement('div');
@@ -108,7 +103,6 @@
       text.style.left = '50%';
       text.draggable = true;
 
-      // Event listeners for dragging and selecting
       text.addEventListener('mousedown', () => {
         selectedText = text;
       });
@@ -125,7 +119,6 @@
       saveState();
     }
 
-    // Remove the selected text
     function removeText() {
       if (selectedText) {
         selectedText.remove();
@@ -134,7 +127,6 @@
       }
     }
 
-    // Change font size, style, or color of selected text
     fontSizeInput.addEventListener('input', () => {
       if (selectedText) {
         selectedText.style.fontSize = `${fontSizeInput.value}px`;
@@ -156,7 +148,6 @@
       }
     });
 
-    // Undo functionality
     function undo() {
       if (historyIndex > 0) {
         historyIndex--;
@@ -164,7 +155,6 @@
       }
     }
 
-    // Redo functionality
     function redo() {
       if (historyIndex < history.length - 1) {
         historyIndex++;
@@ -172,14 +162,11 @@
       }
     }
 
-    // Save the current state
     function saveState() {
-      history = history.slice(0, historyIndex + 1); // Discard future states
+      history = history.slice(0, historyIndex + 1);
       history.push(imageContainer.innerHTML);
       historyIndex = history.length - 1;
     }
-
-    // Load a state from history
     function loadState() {
       imageContainer.innerHTML = history[historyIndex];
       imageContainer.querySelectorAll('.text-overlay').forEach((text) => {
